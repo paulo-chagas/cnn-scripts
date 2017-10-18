@@ -6,12 +6,13 @@ from keras import backend as K
 from keras.preprocessing.image import ImageDataGenerator
 from keras.layers import Input
 from keras.callbacks import TensorBoard
+import matplotlib.pyplot as plt
 
 import time
 import os, errno
 
 # Create path for TensorBoard logs
-path = "./logs_tb/tb_{}".format(time.time())
+path = "../logs_tb/tb_{}".format(time.time())
 print path
 
 # Create folder if does not exist
@@ -30,18 +31,18 @@ tensorboard = TensorBoard(log_dir=path,
 # dimensions of our images.
 img_width, img_height = 224, 224
 
-train_data_dir = './data_dir' #contains two classes cats and dogs
-validation_data_dir = './validation' #contains two classes cats and dogs
+train_data_dir = '../data_dir' #contains two classes cats and dogs
+validation_data_dir = '../validation' #contains two classes cats and dogs
 
 nb_train_samples = 314
 nb_validation_samples = 40
-nb_epoch = 10
+nb_epoch = 1000
 
 # create the base pre-trained model
 print "\n\n\n\n"
 print "Creating model InceptionV3 --  no weights"
 base_model = InceptionV3(weights=None, include_top=False)
-weights_imagenet = './inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
+weights_imagenet = '../inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
 print "Loading weights..."
 base_model.load_weights(weights_imagenet)
 print "Done"
@@ -78,14 +79,14 @@ test_datagen = ImageDataGenerator()#rescale=1./255)
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
     target_size=(img_width, img_height),
-    batch_size=16,
+    batch_size=32,
     class_mode='categorical'
 )
 
 validation_generator = test_datagen.flow_from_directory(
     validation_data_dir,
     target_size=(img_width, img_height),
-    batch_size=16,
+    batch_size=32,
     class_mode='categorical'
 )
 
@@ -93,9 +94,9 @@ print "Start history model - training the top layers"
 history = model.fit_generator(
     train_generator,
     epochs=nb_epoch,
-    steps_per_epoch=(nb_train_samples/16),
+    steps_per_epoch=(nb_train_samples/32),
     validation_data=validation_generator,
-    validation_steps=(nb_validation_samples/16)) #1020
+    validation_steps=(nb_validation_samples/32)) #1020
 
 # at this point, the top layers are well trained and we can start fine-tuning
 # convolutional layers from inception V3. We will freeze the bottom N layers
@@ -117,7 +118,7 @@ for layer in model.layers[172:]:
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
 from keras.optimizers import SGD
-model.compile(optimizer=SGD(lr=0.0001, decay=1e-6, momentum=0.9), 
+model.compile(optimizer=SGD(lr=0.001, decay=1e-6, momentum=0.9), 
         loss='categorical_crossentropy', 
         metrics=['accuracy'])
 
@@ -127,15 +128,28 @@ model.compile(optimizer=SGD(lr=0.0001, decay=1e-6, momentum=0.9),
 # fine-tune the model
 
 print "Fine-Tuning the model..."
-model.fit_generator(
-        train_generator,
-        epochs=nb_epoch,
-        steps_per_epoch=(nb_train_samples/16),
-        validation_data=validation_generator,
-        validation_steps=(nb_validation_samples/16),
-        callbacks=[tensorboard])
+history = model.fit_generator(
+            train_generator,
+            epochs=nb_epoch,
+            steps_per_epoch=(nb_train_samples/16),
+            validation_data=validation_generator,
+            validation_steps=(nb_validation_samples/16),
+            callbacks=[tensorboard])
 
 print "Done"
 print "Saving model"
-model.save("inception_retrained_model2.h5")
+model.save("inception_retrained_model{}.h5".format(time.time()))
 print "Model saved"
+
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+
+plt.savefig('../result_new.png', bbox_inches='tight')
+plt.show()
