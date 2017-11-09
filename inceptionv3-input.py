@@ -14,7 +14,7 @@ from keras.layers import Input
 from keras.callbacks import TensorBoard
 from keras.callbacks import CSVLogger
 import matplotlib.pyplot as plt
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop
 from keras.utils import np_utils
 
 import numpy as np
@@ -90,10 +90,10 @@ nb_validation_samples = 40
 log.append("nb_validation_samples = " + str(nb_validation_samples))
 
 #nb_epoch = 50
-nb_epoch = 10
+nb_epoch = 100
 log.append("nb_epoch = " + str(nb_epoch))
 
-batch_size = 16
+batch_size = 32
 log.append("batch_size = " + str(batch_size))
 
 # create the base pre-trained model
@@ -121,9 +121,15 @@ model = Model(inputs=base_model.input, outputs=predictions)
 for layer in base_model.layers:
     layer.trainable = False
 
+print "Layers\n"
+for i, layer in enumerate(model.layers):
+    print(i, layer.name, layer.trainable)
+
+lr = 1e-5
+log.append("learning rate for training the top layers = " + str(lr))
 # compile the model (should be done *after* setting layers to non-trainable)
 #model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
-model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=RMSprop(lr=lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
 #==========================================================================
 print "Loading training data..."
@@ -240,7 +246,7 @@ plt.savefig(path_img+'result_loss_toplayers.png', bbox_inches='tight')
 # we should freeze:
 print "Layers\n"
 for i, layer in enumerate(base_model.layers):
-    print(i, layer.name)
+    print(i, layer.name, layer.trainable)
 
 # we chose to train the top 2 inception blocks, i.e. we will freeze
 # the first 172 layers and unfreeze the rest:
