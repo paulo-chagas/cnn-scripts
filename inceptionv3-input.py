@@ -77,23 +77,17 @@ tensorboard = TensorBoard(log_dir=path_tb,
 img_width, img_height = 299, 299
 log.append("img_width, img_height = "+str(img_width) + ", " + str(299))
 
-train_data_dir = '../data_dir'
+train_data_dir = '../base_train/charts_png_dir'
 log.append("train_data_dir="+train_data_dir)
 
-validation_data_dir = '../validation'
+validation_data_dir = '../base_validation/charts_png_test_dir'
 log.append("validation_data_dir="+validation_data_dir)
-
-nb_train_samples = 314
-log.append("nb_train_samples = " + str(nb_train_samples))
-
-nb_validation_samples = 40
-log.append("nb_validation_samples = " + str(nb_validation_samples))
 
 #nb_epoch = 50
 nb_epoch = 100
 log.append("nb_epoch = " + str(nb_epoch))
 
-batch_size = 32
+batch_size = 16
 log.append("batch_size = " + str(batch_size))
 
 # create the base pre-trained model
@@ -134,7 +128,8 @@ model.compile(optimizer=RMSprop(lr=lr), loss='categorical_crossentropy', metrics
 #==========================================================================
 print "Loading training data..."
 
-X_train, y_train, tags = dataset.dataset(train_data_dir, img_width)
+X_train, y_train, tags, nb_train_samples = dataset.dataset(train_data_dir, img_width)
+log.append("nb_train_samples = " + str(nb_train_samples))
 nb_classes = len(tags)
 
 Y_train = np_utils.to_categorical(y_train, nb_classes)
@@ -142,7 +137,8 @@ Y_train = np_utils.to_categorical(y_train, nb_classes)
 
 print "Loading validation data..."
 
-X_test, y_test, tags = dataset.dataset(validation_data_dir, img_width)
+X_test, y_test, tags, nb_validation_samples = dataset.dataset(validation_data_dir, img_width)
+log.append("nb_validation_samples = " + str(nb_validation_samples))
 
 Y_test = np_utils.to_categorical(y_test, nb_classes)
 
