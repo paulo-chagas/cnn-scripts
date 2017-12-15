@@ -69,7 +69,7 @@ def dataset(base_dir, n):
 
     print "Processed: %d images" % (processed_image_count)
 
-    X = np.array(X).astype(np.float32)
+    X = np.array(X, dtype='float32')
     #print X.shape
     #X = X.transpose((0, 3, 1, 2))
     X = preprocess_input(X)
@@ -85,7 +85,7 @@ def dataset(base_dir, n):
         print class_name, sum(y==class_index)
     print 
 
-    return X, y, tags
+    return X, y, tags, processed_image_count
 
 
 def main():
